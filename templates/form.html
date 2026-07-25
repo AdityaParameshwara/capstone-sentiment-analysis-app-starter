@@ -2,19 +2,86 @@
 <html>
     <head>
         <title>Sentiment Analysis</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     </head>
     <body>
-        <form method="POST">
-            <textarea name="user_text" rows="5"></textarea>
-            <input type="submit" value="Analyze Text">
+      <div class="container">
+          <div class="text-center">
+              <h1>sentimentScope</h1>
+          </div>
+          <div class="row">
+              <div class="col-lg-8 mx-auto">
+                  <form method="POST">
+                      <div class="form-group">
+                          <textarea class="form-control" name="user_text" rows="5"></textarea>
+                      </div>
+                      <input type="submit" value="Analyze Text" class="btn btn-primary">
+                  </form>
+              </div>
+          </div>
 
-            {% if sentiment %}
-                <p>Positive: {{ sentiment['pos'] * 100 }}%</p>
-                <p>Negative: {{ sentiment['neg'] * 100 }}%</p>
-                <p>Neutral: {{ sentiment['neu'] * 100 }}%</p>
-                <p>Compound: {{ sentiment['compound'] * 100 }}%</p>
-                <p>Custom Model Positive: {{ sentiment['custom model positive'] * 100 }}</p>
-            {% endif %}
-        </form>
+          {% if sentiment %}
+          <div class="row mt-5">
+              <div class="col-lg-8 mx-auto">
+                  <div class="text-center">
+                      <h2>Results:</h2>
+                  </div>
+                  <div class="card p-4">
+                      <div class="row">
+                          <div class="col-md-6">
+                              <div id="vaderChart" style="height: 300px;"></div>
+                          </div>
+                          <div class="col-md-6">
+                              <div id="kerasGauge" style="height: 300px;"></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          {% endif %}
+      </div>
+      <script>
+        {% if sentiment %}
+        var vaderData = [{
+          type: 'bar',
+          x: ['Positive', 'Neutral', 'Negative'],
+          y: [{{ sentiment['pos'] * 100 }}, {{ sentiment['neu'] * 100 }}, {{ sentiment['neg'] * 100 }}],
+          marker: {
+            color: ['#2ecc71', '#f1c40f', '#e74c3c']
+          }
+        }];
+
+        var vaderLayout = {
+          title: 'VADER Sentiment Breakdown',
+          yaxis: { range: [0, 100] }
+        };
+
+        Plotly.newPlot('vaderChart', vaderData, vaderLayout);
+
+        var kerasValue = {{ sentiment['custom model positive'] * 100 }};
+        var kerasData = [{
+          type: 'indicator',
+          mode: 'gauge+number',
+          value: kerasValue,
+          gauge: {
+            axis: { range: [0, 100] },
+            steps: [
+              { range: [0, 40], color: '#e74c3c' },
+              { range: [41, 70], color: '#f1c40f' },
+              { range: [71, 100], color: '#2ecc71' }
+            ],
+            bar: { color: '#000000' }
+          }
+        }];
+
+        var kerasLayout = {
+          title: 'Custom Keras Model Score'
+        };
+
+        Plotly.newPlot('kerasGauge', kerasData, kerasLayout);
+        {% endif %}
+      </script>
     </body>
 </html>
